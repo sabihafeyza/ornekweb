@@ -1,0 +1,1405 @@
+<!DOCTYPE html>
+<html lang="tr" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVA // Dijital Tasarım & İnteraktif Vitrin</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Space Grotesk & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Space Grotesk', 'sans-serif'],
+                    },
+                    colors: {
+                        dark: {
+                            950: '#05050A',
+                            900: '#0B0C14',
+                            800: '#131524',
+                            700: '#1E2136'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --accent-primary: #8B5CF6;
+            --accent-secondary: #EC4899;
+            --accent-glow: rgba(139, 92, 246, 0.45);
+        }
+
+        body {
+            background-color: #05050A;
+            color: #F8FAFC;
+            overflow-x: hidden;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #05050A;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1E2136;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-primary);
+        }
+
+        /* Glassmorphism Utilities */
+        .glass-card {
+            background: rgba(19, 21, 36, 0.55);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .glass-card:hover {
+            border-color: var(--accent-primary);
+            box-shadow: 0 20px 60px -10px var(--accent-glow);
+        }
+
+        .glass-nav {
+            background: rgba(5, 5, 10, 0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        /* Dynamic Accent Gradient Text & Backgrounds */
+        .text-gradient-accent {
+            background: linear-gradient(135deg, #FFFFFF 0%, var(--accent-primary) 50%, var(--accent-secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .bg-gradient-accent {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+        }
+
+        .glow-btn {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            box-shadow: 0 10px 30px -5px var(--accent-glow);
+            transition: all 0.3s ease;
+        }
+        .glow-btn:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 15px 35px -3px var(--accent-glow);
+        }
+        .glow-btn:active {
+            transform: translateY(0) scale(0.99);
+        }
+
+        /* 3D Tilt Wrapper */
+        .tilt-card {
+            transform-style: preserve-3d;
+            will-change: transform;
+        }
+
+        /* Floating Animation */
+        @keyframes floatSlow {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-12px) rotate(1.5deg); }
+        }
+        .animate-float {
+            animation: floatSlow 6s ease-in-out infinite;
+        }
+
+        /* Pulse Ring */
+        @keyframes pulseRing {
+            0% { transform: scale(0.8); opacity: 0.8; }
+            100% { transform: scale(2.2); opacity: 0; }
+        }
+        .pulse-ring::before {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 9999px;
+            background: var(--accent-primary);
+            animation: pulseRing 2s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+            z-index: -1;
+        }
+
+        /* Custom Range Slider */
+        input[type=range] {
+            -webkit-appearance: none;
+            background: rgba(255,255,255,0.1);
+            height: 8px;
+            border-radius: 999px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 22px;
+            width: 22px;
+            border-radius: 50%;
+            background: var(--accent-primary);
+            cursor: pointer;
+            box-shadow: 0 0 15px var(--accent-primary);
+            border: 2px solid #fff;
+        }
+
+        /* Marquee Animation */
+        @keyframes marquee {
+            0% { transform: translateX(0%); }
+            100% { transform: translateX(-50%); }
+        }
+        .animate-marquee {
+            display: flex;
+            width: max-content;
+            animation: marquee 28s linear infinite;
+        }
+        .animate-marquee:hover {
+            animation-play-state: paused;
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-purple-500 selection:text-white relative">
+
+    <!-- Interactive Background Particle Canvas -->
+    <canvas id="bgCanvas" class="fixed inset-0 pointer-events-none z-0 opacity-70"></canvas>
+
+    <!-- Ambient Glow Blobs -->
+    <div class="fixed top-[-15%] left-[-10%] w-[500px] h-[500px] rounded-full pointer-events-none z-0 blur-[140px] opacity-25 transition-colors duration-700" id="blob1" style="background: var(--accent-primary);"></div>
+    <div class="fixed bottom-[-15%] right-[-10%] w-[500px] h-[500px] rounded-full pointer-events-none z-0 blur-[140px] opacity-20 transition-colors duration-700" id="blob2" style="background: var(--accent-secondary);"></div>
+
+    <!-- Custom Toast Notification -->
+    <div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col gap-3 pointer-events-none"></div>
+
+    <!-- Top Customization Drawer / Bar -->
+    <div id="customizerPanel" class="fixed top-20 right-4 z-40 glass-card rounded-2xl p-4 w-72 transform translate-x-[120%] transition-transform duration-500 shadow-2xl">
+        <div class="flex items-center justify-between mb-3 pb-2 border-b border-white/10">
+            <span class="font-display font-bold text-sm flex items-center gap-2">
+                <i class="fa-solid fa-wand-magic-sparkles text-purple-400"></i> Sayfayı Kişiselleştir
+            </span>
+            <button onclick="toggleCustomizer()" class="text-slate-400 hover:text-white p-1">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="space-y-4 text-xs">
+            <div>
+                <label class="block text-slate-400 mb-1.5 font-medium">Adınız veya Markanız:</label>
+                <input type="text" id="customNameInput" value="NOVA STUDIO" oninput="updateCustomIdentity()" placeholder="Adınızı yazın..."
+                    class="w-full bg-dark-900/90 border border-white/15 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-purple-500 transition">
+            </div>
+            <div>
+                <label class="block text-slate-400 mb-1.5 font-medium">Unvan / Slogan:</label>
+                <input type="text" id="customRoleInput" value="Geleceğin Dijital Deneyimlerini Tasarlıyoruz" oninput="updateCustomIdentity()" placeholder="Unvanınızı yazın..."
+                    class="w-full bg-dark-900/90 border border-white/15 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-purple-500 transition">
+            </div>
+            <div>
+                <label class="block text-slate-400 mb-2 font-medium">Neon Atmosfer Teması:</label>
+                <div class="grid grid-cols-4 gap-2">
+                    <button onclick="setTheme('#8B5CF6', '#EC4899', 'rgba(139, 92, 246, 0.45)', 'Siber Mor')" class="h-8 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 border-2 border-white/40 hover:scale-105 transition" title="Siber Mor"></button>
+                    <button onclick="setTheme('#10B981', '#06B6D4', 'rgba(16, 185, 129, 0.45)', 'Zümrüt Neon')" class="h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-500 border border-white/10 hover:scale-105 transition" title="Zümrüt Neon"></button>
+                    <button onclick="setTheme('#F59E0B', '#EF4444', 'rgba(245, 158, 11, 0.45)', 'Ateş Kehribar')" class="h-8 rounded-xl bg-gradient-to-br from-amber-500 to-red-500 border border-white/10 hover:scale-105 transition" title="Ateş Kehribar"></button>
+                    <button onclick="setTheme('#3B82F6', '#6366F1', 'rgba(59, 130, 246, 0.45)', 'Elektrik Mavi')" class="h-8 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 border border-white/10 hover:scale-105 transition" title="Elektrik Mavi"></button>
+                </div>
+            </div>
+            <div>
+                <label class="block text-slate-400 mb-1.5 font-medium flex justify-between">
+                    <span>Parçacık Hızı:</span>
+                    <span id="speedValueLabel" class="text-white">Normal</span>
+                </label>
+                <input type="range" id="particleSpeedSlider" min="0.2" max="3" step="0.2" value="1" oninput="updateParticleSpeed(this.value)" class="w-full">
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Bar -->
+    <header class="fixed top-0 left-0 right-0 z-30 glass-nav">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <!-- Brand Logo -->
+            <a href="#" class="flex items-center gap-3 group">
+                <div class="w-10 h-10 rounded-xl bg-gradient-accent flex items-center justify-center shadow-lg group-hover:rotate-12 transition-transform duration-300">
+                    <i class="fa-solid fa-bolt text-white text-lg"></i>
+                </div>
+                <div>
+                    <span id="navBrandName" class="font-display font-bold text-xl tracking-tight text-white block leading-none">NOVA STUDIO</span>
+                    <span class="text-[10px] uppercase tracking-widest text-slate-400">Interactive Lab</span>
+                </div>
+            </a>
+
+            <!-- Desktop Links -->
+            <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-300">
+                <a href="#kesfet" class="hover:text-white transition">Keşfet</a>
+                <a href="#bento" class="hover:text-white transition">Yetenek & Stüdyo</a>
+                <a href="#projeler" class="hover:text-white transition">Vitrin</a>
+                <a href="#hesaplayici" class="hover:text-white transition">Bütçe Sihirbazı</a>
+                <a href="#iletisim" class="hover:text-white transition">İletişim</a>
+            </nav>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center gap-3">
+                <button onclick="toggleSoundEffects()" id="soundToggleBtn" class="glass-card px-3 py-2.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white flex items-center gap-2" title="İnteraktif Ses Efektleri">
+                    <i id="soundIcon" class="fa-solid fa-volume-high text-emerald-400"></i>
+                    <span class="hidden sm:inline">Ses: Açık</span>
+                </button>
+                <button onclick="toggleCustomizer()" class="glass-card px-3.5 py-2.5 rounded-xl text-xs font-semibold text-white flex items-center gap-2 border border-purple-500/40 hover:border-purple-400">
+                    <i class="fa-solid fa-sliders"></i>
+                    <span>Kişiselleştir</span>
+                </button>
+                <a href="#iletisim" class="hidden sm:inline-flex glow-btn px-5 py-2.5 rounded-xl text-xs font-semibold text-white items-center gap-2">
+                    <span>Proje Başlat</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="relative z-10 pt-28 pb-20">
+
+        <!-- HERO SECTION -->
+        <section id="kesfet" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-16 lg:py-20">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+                
+                <!-- Left Column: Typography & CTAs -->
+                <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
+                    <div class="inline-flex items-center gap-2.5 px-4 py-2 rounded-full glass-card text-xs font-medium text-slate-200">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 relative pulse-ring"></span>
+                        <span>2026 Yeni Nesil Web Deneyimi • Şu Anda Aktif</span>
+                    </div>
+
+                    <h1 class="font-display font-bold text-4xl sm:text-6xl lg:text-7xl tracking-tight leading-[1.08]">
+                        Merhaba, Ben <br>
+                        <span id="heroBrandName" class="text-gradient-accent">NOVA STUDIO</span>
+                    </h1>
+
+                    <p id="heroRoleText" class="text-lg sm:text-xl text-slate-300 max-w-2xl mx-auto lg:mx-0 font-light leading-relaxed">
+                        Geleceğin Dijital Deneyimlerini Tasarlıyoruz. Estetik kod mimarisi, üç boyutlu etkileşimler ve akılda kalıcı arayüzlerle sıradanlığa meydan okuyan özel web dünyası.
+                    </p>
+
+                    <!-- Dynamic Typewriter Pill -->
+                    <div class="flex items-center justify-center lg:justify-start gap-2 text-sm text-slate-400 font-mono">
+                        <i class="fa-solid fa-terminal text-purple-400"></i>
+                        <span>Odak Noktamız:</span>
+                        <span id="typewriterText" class="text-white font-semibold border-r-2 border-purple-400 pr-1">Yaratıcı Web Mimarisi</span>
+                    </div>
+
+                    <!-- CTA Row -->
+                    <div class="pt-4 flex flex-wrap items-center justify-center lg:justify-start gap-4">
+                        <a href="#projeler" onclick="playClickTone(520)" class="glow-btn px-7 py-4 rounded-2xl font-display font-semibold text-sm text-white flex items-center gap-3">
+                            <span>Eserleri Keşfet</span>
+                            <i class="fa-solid fa-compass"></i>
+                        </a>
+                        <button onclick="triggerConfettiBurst(); playClickTone(660)" class="glass-card px-6 py-4 rounded-2xl font-display font-semibold text-sm text-white hover:bg-white/10 flex items-center gap-2.5">
+                            <i class="fa-solid fa-wand-sparkles text-amber-400"></i>
+                            <span>Sihirli Efekt Başlat</span>
+                        </button>
+                    </div>
+
+                    <!-- Quick Trust Metrics -->
+                    <div class="pt-6 grid grid-cols-3 gap-4 max-w-lg mx-auto lg:mx-0 border-t border-white/10">
+                        <div>
+                            <div class="font-display font-bold text-2xl sm:text-3xl text-white">99.8%</div>
+                            <div class="text-xs text-slate-400">Performans Skoru</div>
+                        </div>
+                        <div>
+                            <div class="font-display font-bold text-2xl sm:text-3xl text-white">120+</div>
+                            <div class="text-xs text-slate-400">Kreatif Proje</div>
+                        </div>
+                        <div>
+                            <div class="font-display font-bold text-2xl sm:text-3xl text-white">24/7</div>
+                            <div class="text-xs text-slate-400">Canlı Etkileşim</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: 3D Interactive Holo-Card -->
+                <div class="lg:col-span-5 flex justify-center">
+                    <div id="heroTiltCard" class="w-full max-w-md glass-card rounded-3xl p-6 sm:p-8 relative overflow-hidden tilt-card cursor-pointer"
+                         onmousemove="handleTilt(event, this)" onmouseleave="resetTilt(this)">
+                        
+                        <!-- Decorative Top Glow -->
+                        <div class="absolute -top-24 -right-24 w-48 h-48 rounded-full blur-3xl opacity-40 pointer-events-none" style="background: var(--accent-primary);"></div>
+
+                        <!-- Card Header -->
+                        <div class="flex items-center justify-between mb-6">
+                            <div class="flex items-center gap-3">
+                                <div class="w-12 h-12 rounded-2xl bg-gradient-accent p-0.5">
+                                    <div class="w-full h-full bg-dark-900 rounded-[14px] flex items-center justify-center">
+                                        <i class="fa-solid fa-astronaut text-xl text-white"></i>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h3 id="cardBrandName" class="font-display font-bold text-white text-base">NOVA STUDIO</h3>
+                                    <p class="text-xs text-emerald-400 flex items-center gap-1">
+                                        <i class="fa-solid fa-circle-check"></i> Doğrulanmış Dijital Sanatçı
+                                    </p>
+                                </div>
+                            </div>
+                            <span class="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[11px] font-mono text-slate-300">
+                                v4.2 PRO
+                            </span>
+                        </div>
+
+                        <!-- Interactive Visual Core inside Card -->
+                        <div class="relative h-48 rounded-2xl bg-dark-950/90 border border-white/10 overflow-hidden mb-6 flex flex-col items-center justify-center p-4 group" onclick="cycleCardVisual()">
+                            <!-- Animated SVG Rings -->
+                            <svg class="w-32 h-32 animate-spin" style="animation-duration: 14s;" viewBox="0 0 100 100">
+                                <defs>
+                                    <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stop-color="var(--accent-primary)" />
+                                        <stop offset="100%" stop-color="var(--accent-secondary)" />
+                                    </linearGradient>
+                                </defs>
+                                <circle cx="50" cy="50" r="40" fill="none" stroke="url(#ringGrad)" stroke-width="3" stroke-dasharray="40 20" />
+                                <circle cx="50" cy="50" r="28" fill="none" stroke="#ffffff" stroke-opacity="0.2" stroke-width="2" stroke-dasharray="15 10" />
+                            </svg>
+                            <div class="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+                                <span id="coreEnergyValue" class="font-display font-bold text-2xl text-white">100%</span>
+                                <span id="coreModeLabel" class="text-[10px] uppercase tracking-widest text-slate-400 mt-0.5">Kreatif Çekirdek</span>
+                            </div>
+                            <div class="absolute bottom-2 right-3 text-[10px] text-slate-400 group-hover:text-white transition">
+                                <i class="fa-solid fa-hand-pointer mr-1"></i>Mod Değiştir
+                            </div>
+                        </div>
+
+                        <!-- Telemetry Bars -->
+                        <div class="space-y-3 mb-6">
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span class="text-slate-400">Estetik & UI Zarafeti</span>
+                                    <span class="text-white font-mono">98%</span>
+                                </div>
+                                <div class="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+                                    <div class="h-full rounded-full bg-gradient-accent w-[98%]"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span class="text-slate-400">Hız & Akıcı Animasyon</span>
+                                    <span class="text-white font-mono">120 FPS</span>
+                                </div>
+                                <div class="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+                                    <div class="h-full rounded-full bg-gradient-accent w-[95%]"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card Footer Tags -->
+                        <div class="flex items-center justify-between pt-4 border-t border-white/10 text-xs text-slate-400">
+                            <span class="flex items-center gap-1.5">
+                                <i class="fa-solid fa-location-dot text-pink-400"></i> Türkiye & Global
+                            </span>
+                            <span class="text-slate-300 font-medium">Fareyi Kartta Gezdirin ✨</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- INFINITE TECH & VIBE MARQUEE -->
+        <div class="py-6 border-y border-white/10 bg-dark-900/50 overflow-hidden mb-20">
+            <div class="animate-marquee flex items-center gap-12 text-sm font-display font-semibold uppercase tracking-wider text-slate-400">
+                <span class="flex items-center gap-3"><i class="fa-solid fa-star text-purple-400"></i> Ultra Modern Web Tasarımı</span>
+                <span class="flex items-center gap-3"><i class="fa-solid fa-cube text-pink-400"></i> 3B Etkileşimli Deneyimler</span>
+                <span class="flex items-center gap-3"><i class="fa-solid fa-bolt text-amber-400"></i> Yüksek Performanslı Kod</span>
+                <span class="flex items-center gap-3"><i class="fa-solid fa-wand-magic-sparkles text-emerald-400"></i> Yapay Zeka Entegrasyonu</span>
+                <span class="flex items-center gap-3"><i class="fa-solid fa-layer-group text-cyan-400"></i> Glassmorphism & Bento UI</span>
+                <span class="flex items-center gap-3"><i class="fa-solid fa-mobile-screen text-purple-400"></i> %100 Mobil Uyumlu</span>
+                <!-- Duplicate for seamless loop -->
+                <span class="flex items-center gap-3"><i class="fa-solid fa-star text-purple-400"></i> Ultra Modern Web Tasarımı</span>
+                <span class="flex items-center gap-3"><i class="fa-solid fa-cube text-pink-400"></i> 3B Etkileşimli Deneyimler</span>
+                <span class="flex items-center gap-3"><i class="fa-solid fa-bolt text-amber-400"></i> Yüksek Performanslı Kod</span>
+                <span class="flex items-center gap-3"><i class="fa-solid fa-wand-magic-sparkles text-emerald-400"></i> Yapay Zeka Entegrasyonu</span>
+                <span class="flex items-center gap-3"><i class="fa-solid fa-layer-group text-cyan-400"></i> Glassmorphism & Bento UI</span>
+                <span class="flex items-center gap-3"><i class="fa-solid fa-mobile-screen text-purple-400"></i> %100 Mobil Uyumlu</span>
+            </div>
+        </div>
+
+        <!-- INTERACTIVE BENTO GRID SECTION -->
+        <section id="bento" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-28">
+            <div class="text-center max-w-3xl mx-auto mb-14">
+                <span class="text-xs font-semibold uppercase tracking-widest px-3 py-1 rounded-full bg-white/5 border border-white/10 text-purple-300">
+                    İnteraktif Dijital Laboratuvar
+                </span>
+                <h2 class="font-display font-bold text-3xl sm:text-5xl mt-4 text-white">
+                    Sadece Bakmayın, <span class="text-gradient-accent">Deneyimleyin</span>
+                </h2>
+                <p class="text-slate-400 mt-3 text-sm sm:text-base">
+                    Aşağıdaki Bento kutuları canlıdır. Kendi ritminizi çalabilir, renk paletini test edebilir veya canlı sistem saatini inceleyebilirsiniz.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+                
+                <!-- Bento 1: Interactive Sound & Synth Pad (7 cols) -->
+                <div class="md:col-span-7 glass-card rounded-3xl p-6 sm:p-8 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-xs font-mono uppercase tracking-wider text-purple-400 flex items-center gap-2">
+                                <i class="fa-solid fa-wave-square"></i> Canlı Synth Stüdyosu
+                            </span>
+                            <span class="text-xs text-slate-400">Nota Pedlerine Dokunun 🎵</span>
+                        </div>
+                        <h3 class="font-display font-bold text-2xl text-white mb-2">Kreatif Frekans Matrisi</h3>
+                        <p class="text-slate-400 text-sm mb-6">
+                            Web Audio API ile tarayıcınızda anlık kristal ses dalgaları üretin. Her tuş farklı bir harmonik frekansı tetikler.
+                        </p>
+                    </div>
+
+                    <!-- 8 Interactive Synth Pads -->
+                    <div class="grid grid-cols-4 gap-3">
+                        <button onclick="playSynthPad(261.63, 'Do (C4)', this)" class="h-20 rounded-2xl bg-white/5 hover:bg-purple-500/30 border border-white/10 hover:border-purple-400 flex flex-col items-center justify-center transition group">
+                            <span class="font-display font-bold text-white group-hover:scale-110 transition">C4</span>
+                            <span class="text-[10px] text-slate-400 mt-1">261 Hz</span>
+                        </button>
+                        <button onclick="playSynthPad(293.66, 'Re (D4)', this)" class="h-20 rounded-2xl bg-white/5 hover:bg-pink-500/30 border border-white/10 hover:border-pink-400 flex flex-col items-center justify-center transition group">
+                            <span class="font-display font-bold text-white group-hover:scale-110 transition">D4</span>
+                            <span class="text-[10px] text-slate-400 mt-1">293 Hz</span>
+                        </button>
+                        <button onclick="playSynthPad(329.63, 'Mi (E4)', this)" class="h-20 rounded-2xl bg-white/5 hover:bg-cyan-500/30 border border-white/10 hover:border-cyan-400 flex flex-col items-center justify-center transition group">
+                            <span class="font-display font-bold text-white group-hover:scale-110 transition">E4</span>
+                            <span class="text-[10px] text-slate-400 mt-1">329 Hz</span>
+                        </button>
+                        <button onclick="playSynthPad(392.00, 'Sol (G4)', this)" class="h-20 rounded-2xl bg-white/5 hover:bg-emerald-500/30 border border-white/10 hover:border-emerald-400 flex flex-col items-center justify-center transition group">
+                            <span class="font-display font-bold text-white group-hover:scale-110 transition">G4</span>
+                            <span class="text-[10px] text-slate-400 mt-1">392 Hz</span>
+                        </button>
+                        <button onclick="playSynthPad(440.00, 'La (A4)', this)" class="h-20 rounded-2xl bg-white/5 hover:bg-amber-500/30 border border-white/10 hover:border-amber-400 flex flex-col items-center justify-center transition group">
+                            <span class="font-display font-bold text-white group-hover:scale-110 transition">A4</span>
+                            <span class="text-[10px] text-slate-400 mt-1">440 Hz</span>
+                        </button>
+                        <button onclick="playSynthPad(523.25, 'Do (C5)', this)" class="h-20 rounded-2xl bg-white/5 hover:bg-rose-500/30 border border-white/10 hover:border-rose-400 flex flex-col items-center justify-center transition group">
+                            <span class="font-display font-bold text-white group-hover:scale-110 transition">C5</span>
+                            <span class="text-[10px] text-slate-400 mt-1">523 Hz</span>
+                        </button>
+                        <button onclick="playSynthPad(587.33, 'Re (D5)', this)" class="h-20 rounded-2xl bg-white/5 hover:bg-indigo-500/30 border border-white/10 hover:border-indigo-400 flex flex-col items-center justify-center transition group">
+                            <span class="font-display font-bold text-white group-hover:scale-110 transition">D5</span>
+                            <span class="text-[10px] text-slate-400 mt-1">587 Hz</span>
+                        </button>
+                        <button onclick="playChordSequence()" class="h-20 rounded-2xl bg-gradient-accent text-white font-display font-bold text-xs flex flex-col items-center justify-center shadow-lg hover:scale-105 transition">
+                            <i class="fa-solid fa-play mb-1"></i>
+                            <span>Oto Melodi</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Bento 2: Live Time & Telemetry Hub (5 cols) -->
+                <div class="md:col-span-5 glass-card rounded-3xl p-6 sm:p-8 flex flex-col justify-between relative overflow-hidden">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-mono uppercase tracking-wider text-emerald-400 flex items-center gap-2">
+                            <i class="fa-solid fa-satellite-dish"></i> Canlı Zaman & Konum
+                        </span>
+                        <span class="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-[11px] font-mono">
+                            UTC+3
+                        </span>
+                    </div>
+
+                    <div class="my-6">
+                        <div id="liveClockDisplay" class="font-display font-bold text-4xl sm:text-5xl text-white tracking-wider font-mono">
+                            00:00:00
+                        </div>
+                        <p id="liveDateDisplay" class="text-xs text-slate-400 mt-2">
+                            Senkronize ediliyor...
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 pt-4 border-t border-white/10">
+                        <div class="p-3 rounded-2xl bg-white/5">
+                            <div class="text-[11px] text-slate-400">Merkez Üssü</div>
+                            <div class="font-display font-semibold text-sm text-white mt-0.5 flex items-center gap-1.5">
+                                <i class="fa-solid fa-earth-europe text-purple-400"></i> Ankara / TR
+                            </div>
+                        </div>
+                        <div class="p-3 rounded-2xl bg-white/5">
+                            <div class="text-[11px] text-slate-400">Sistem Durumu</div>
+                            <div class="font-display font-semibold text-sm text-emerald-400 mt-0.5 flex items-center gap-1.5">
+                                <i class="fa-solid fa-bolt"></i> Optimum
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bento 3: Tech Stack & Architecture (5 cols) -->
+                <div class="md:col-span-5 glass-card rounded-3xl p-6 sm:p-8">
+                    <span class="text-xs font-mono uppercase tracking-wider text-pink-400 flex items-center gap-2 mb-3">
+                        <i class="fa-solid fa-microchip"></i> Teknoloji Cephaneliği
+                    </span>
+                    <h3 class="font-display font-bold text-xl text-white mb-4">Modern & Ölçeklenebilir</h3>
+                    <div class="flex flex-wrap gap-2.5">
+                        <span class="px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-medium text-white flex items-center gap-2 hover:border-purple-400 transition">
+                            <i class="fa-brands fa-react text-cyan-400"></i> React & Next.js
+                        </span>
+                        <span class="px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-medium text-white flex items-center gap-2 hover:border-purple-400 transition">
+                            <i class="fa-solid fa-wind text-sky-400"></i> Tailwind CSS
+                        </span>
+                        <span class="px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-medium text-white flex items-center gap-2 hover:border-purple-400 transition">
+                            <i class="fa-solid fa-cubes text-purple-400"></i> Three.js / WebGL
+                        </span>
+                        <span class="px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-medium text-white flex items-center gap-2 hover:border-purple-400 transition">
+                            <i class="fa-brands fa-node-js text-emerald-400"></i> Node & TypeScript
+                        </span>
+                        <span class="px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-medium text-white flex items-center gap-2 hover:border-purple-400 transition">
+                            <i class="fa-solid fa-brain text-amber-400"></i> Yapay Zeka API
+                        </span>
+                        <span class="px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-medium text-white flex items-center gap-2 hover:border-purple-400 transition">
+                            <i class="fa-brands fa-figma text-pink-400"></i> UI/UX Tasarım
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Bento 4: Interactive Color & Mood Generator (7 cols) -->
+                <div class="md:col-span-7 glass-card rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+                    <div class="space-y-2 text-center sm:text-left">
+                        <span class="text-xs font-mono uppercase tracking-wider text-amber-400 flex items-center justify-center sm:justify-start gap-2">
+                            <i class="fa-solid fa-palette"></i> Anlık Atmosfer Değiştirici
+                        </span>
+                        <h3 class="font-display font-bold text-2xl text-white">Ruh Halinize Göre Renk Seçin</h3>
+                        <p class="text-slate-400 text-sm max-w-md">
+                            Tek tıkla tüm sayfanın ışıklandırmasını, neon parlamalarını ve arka plan parçacıklarının rengini dönüştürün.
+                        </p>
+                    </div>
+                    <div class="flex sm:flex-col gap-3 shrink-0">
+                        <button onclick="setTheme('#8B5CF6', '#EC4899', 'rgba(139, 92, 246, 0.45)', 'Siber Mor')" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-semibold shadow-lg hover:scale-105 transition">
+                            Siber Mor
+                        </button>
+                        <button onclick="setTheme('#10B981', '#06B6D4', 'rgba(16, 185, 129, 0.45)', 'Zümrüt Neon')" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-cyan-600 text-white text-xs font-semibold shadow-lg hover:scale-105 transition">
+                            Zümrüt Neon
+                        </button>
+                        <button onclick="setTheme('#F59E0B', '#EF4444', 'rgba(245, 158, 11, 0.45)', 'Ateş Kehribar')" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-red-600 text-white text-xs font-semibold shadow-lg hover:scale-105 transition">
+                            Ateş Kehribar
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- FILTERABLE SHOWCASE / PORTFOLIO SECTION -->
+        <section id="projeler" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-28">
+            <div class="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+                <div>
+                    <span class="text-xs font-semibold uppercase tracking-widest px-3 py-1 rounded-full bg-white/5 border border-white/10 text-pink-300">
+                        Seçkin Eserler
+                    </span>
+                    <h2 class="font-display font-bold text-3xl sm:text-5xl mt-4 text-white">
+                        Dijital <span class="text-gradient-accent">Vitrinimiz</span>
+                    </h2>
+                </div>
+
+                <!-- Category Filter Buttons -->
+                <div class="flex flex-wrap gap-2" id="portfolioFilters">
+                    <button onclick="filterProjects('all', this)" class="filter-btn active-filter px-4 py-2 rounded-xl text-xs font-semibold bg-white text-dark-950 transition">
+                        Tümü
+                    </button>
+                    <button onclick="filterProjects('web', this)" class="filter-btn px-4 py-2 rounded-xl text-xs font-semibold glass-card text-slate-300 hover:text-white transition">
+                        Web Deneyimi
+                    </button>
+                    <button onclick="filterProjects('ai', this)" class="filter-btn px-4 py-2 rounded-xl text-xs font-semibold glass-card text-slate-300 hover:text-white transition">
+                        Yapay Zeka
+                    </button>
+                    <button onclick="filterProjects('fintech', this)" class="filter-btn px-4 py-2 rounded-xl text-xs font-semibold glass-card text-slate-300 hover:text-white transition">
+                        Fintech & Veri
+                    </button>
+                </div>
+            </div>
+
+            <!-- Projects Grid -->
+            <div id="projectsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Populated dynamically via JS -->
+            </div>
+        </section>
+
+        <!-- INTERACTIVE PROJECT & BUDGET ESTIMATOR -->
+        <section id="hesaplayici" class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 mb-28">
+            <div class="glass-card rounded-3xl p-6 sm:p-12 relative overflow-hidden">
+                <div class="text-center max-w-2xl mx-auto mb-10">
+                    <span class="text-xs font-semibold uppercase tracking-widest px-3 py-1 rounded-full bg-white/5 border border-white/10 text-emerald-300">
+                        İnteraktif Hesaplayıcı
+                    </span>
+                    <h2 class="font-display font-bold text-3xl sm:text-4xl mt-4 text-white">
+                        Proje & Bütçe Sihirbazı
+                    </h2>
+                    <p class="text-slate-400 text-sm mt-2">
+                        Hayalinizdeki projenin özelliklerini seçin, tahmini süreyi ve yatırım bütçesini anında görün.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                    <!-- Controls (7 cols) -->
+                    <div class="lg:col-span-7 space-y-6">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-3">1. Proje Türü Seçin</label>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" id="projectTypeGroup">
+                                <button type="button" onclick="selectCalcType(25000, 2, 'Kurumsal & Prestij Web', this)" class="calc-type-btn p-4 rounded-2xl border border-purple-500 bg-purple-500/20 text-left transition">
+                                    <i class="fa-solid fa-gem text-purple-400 text-lg mb-2"></i>
+                                    <div class="font-display font-bold text-sm text-white">Prestij Web</div>
+                                    <div class="text-[11px] text-slate-400">Afilli Vitrin</div>
+                                </button>
+                                <button type="button" onclick="selectCalcType(45000, 4, 'E-Ticaret & SaaS Platformu', this)" class="calc-type-btn p-4 rounded-2xl border border-white/10 bg-white/5 text-left hover:border-white/30 transition">
+                                    <i class="fa-solid fa-cart-shopping text-pink-400 text-lg mb-2"></i>
+                                    <div class="font-display font-bold text-sm text-white">SaaS / Mağaza</div>
+                                    <div class="text-[11px] text-slate-400">Tam Otomasyon</div>
+                                </button>
+                                <button type="button" onclick="selectCalcType(65000, 6, 'Yapay Zeka & Özel WebGL', this)" class="calc-type-btn p-4 rounded-2xl border border-white/10 bg-white/5 text-left hover:border-white/30 transition">
+                                    <i class="fa-solid fa-wand-magic-sparkles text-cyan-400 text-lg mb-2"></i>
+                                    <div class="font-display font-bold text-sm text-white">Özel AI / 3D</div>
+                                    <div class="text-[11px] text-slate-400">İleri Mühendislik</div>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-3">2. Ekstra Süper Güçler</label>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <label class="flex items-center gap-3 p-3.5 rounded-2xl bg-white/5 border border-white/10 cursor-pointer hover:border-purple-400/50 transition">
+                                    <input type="checkbox" value="8000" onchange="updateEstimate()" class="calc-addon w-4 h-4 accent-purple-500 rounded">
+                                    <span class="text-xs text-white font-medium">3B / Parçacık Animasyonları (+8.000 ₺)</span>
+                                </label>
+                                <label class="flex items-center gap-3 p-3.5 rounded-2xl bg-white/5 border border-white/10 cursor-pointer hover:border-purple-400/50 transition">
+                                    <input type="checkbox" value="12000" onchange="updateEstimate()" class="calc-addon w-4 h-4 accent-purple-500 rounded">
+                                    <span class="text-xs text-white font-medium">Yapay Zeka Asistanı (+12.000 ₺)</span>
+                                </label>
+                                <label class="flex items-center gap-3 p-3.5 rounded-2xl bg-white/5 border border-white/10 cursor-pointer hover:border-purple-400/50 transition">
+                                    <input type="checkbox" value="6000" onchange="updateEstimate()" class="calc-addon w-4 h-4 accent-purple-500 rounded">
+                                    <span class="text-xs text-white font-medium">Çoklu Dil & Global SEO (+6.000 ₺)</span>
+                                </label>
+                                <label class="flex items-center gap-3 p-3.5 rounded-2xl bg-white/5 border border-white/10 cursor-pointer hover:border-purple-400/50 transition">
+                                    <input type="checkbox" value="9500" onchange="updateEstimate()" class="calc-addon w-4 h-4 accent-purple-500 rounded">
+                                    <span class="text-xs text-white font-medium">Özel Yönetim Paneli (+9.500 ₺)</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
+                                <span>3. Teslimat Hızı Tercihi</span>
+                                <span id="urgencyLabel" class="text-purple-400">Standart Plan</span>
+                            </div>
+                            <input type="range" id="urgencySlider" min="1" max="3" step="1" value="2" oninput="updateEstimate()" class="w-full">
+                            <div class="flex justify-between text-[11px] text-slate-400 mt-1">
+                                <span>Esnek (%10 İndirim)</span>
+                                <span>Standart</span>
+                                <span>Ekspres (+%25 Hız)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Live Summary Card (5 cols) -->
+                    <div class="lg:col-span-5 bg-dark-950/90 border border-white/15 rounded-3xl p-6 sm:p-8 flex flex-col justify-between space-y-6">
+                        <div>
+                            <span class="text-xs font-mono uppercase tracking-widest text-slate-400">Canlı Proje Özeti</span>
+                            <h4 id="summaryProjectTitle" class="font-display font-bold text-xl text-white mt-1">Kurumsal & Prestij Web</h4>
+                            
+                            <div class="my-6 py-6 border-y border-white/10">
+                                <div class="text-xs text-slate-400 mb-1">Tahmini Yatırım Bütçesi</div>
+                                <div id="summaryPrice" class="font-display font-bold text-4xl sm:text-5xl text-gradient-accent">
+                                    25.000 ₺
+                                </div>
+                                <div class="text-xs text-emerald-400 mt-2 flex items-center gap-1.5">
+                                    <i class="fa-regular fa-clock"></i>
+                                    <span>Tahmini Süre: <strong id="summaryWeeks">2 - 3 Hafta</strong></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-3">
+                            <button onclick="transferEstimateToContact()" class="w-full glow-btn py-3.5 rounded-2xl font-display font-semibold text-sm text-white flex items-center justify-center gap-2">
+                                <span>Bu Paketi İletişime Aktar</span>
+                                <i class="fa-solid fa-paper-plane"></i>
+                            </button>
+                            <button onclick="copyEstimateSummary()" class="w-full glass-card py-3 rounded-2xl font-display font-medium text-xs text-slate-300 hover:text-white flex items-center justify-center gap-2">
+                                <i class="fa-regular fa-copy"></i>
+                                <span>Teklif Özeti Kopyala</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CONTACT SECTION -->
+        <section id="iletisim" class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="glass-card rounded-3xl p-6 sm:p-12">
+                <div class="text-center max-w-xl mx-auto mb-10">
+                    <span class="text-xs font-semibold uppercase tracking-widest px-3 py-1 rounded-full bg-white/5 border border-white/10 text-purple-300">
+                        Bize Ulaşın
+                    </span>
+                    <h2 class="font-display font-bold text-3xl sm:text-4xl mt-4 text-white">
+                        Yeni Bir Başyapıt <span class="text-gradient-accent">Yaratalım</span>
+                    </h2>
+                    <p class="text-slate-400 text-sm mt-2">
+                        Aşağıdaki formu doldurun, projeniz için özel demomuzu 24 saat içinde hazırlayalım.
+                    </p>
+                </div>
+
+                <form id="contactForm" onsubmit="handleContactSubmit(event)" class="space-y-5">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-2">Adınız Soyadınız *</label>
+                            <input type="text" id="contactName" required placeholder="Örn: Deniz Kaya"
+                                class="w-full bg-dark-950/80 border border-white/15 rounded-2xl px-4 py-3.5 text-sm text-white focus:outline-none focus:border-purple-500 transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-2">E-Posta Adresiniz *</label>
+                            <input type="email" id="contactEmail" required placeholder="ornek@alanadi.com"
+                                class="w-full bg-dark-950/80 border border-white/15 rounded-2xl px-4 py-3.5 text-sm text-white focus:outline-none focus:border-purple-500 transition">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-2">Proje Detayları & Notunuz *</label>
+                        <textarea id="contactMessage" rows="4" required placeholder="Hayalinizdeki web sayfasından veya projeden bahsedin..."
+                            class="w-full bg-dark-950/80 border border-white/15 rounded-2xl px-4 py-3.5 text-sm text-white focus:outline-none focus:border-purple-500 transition"></textarea>
+                    </div>
+                    <button type="submit" class="w-full glow-btn py-4 rounded-2xl font-display font-bold text-sm text-white flex items-center justify-center gap-2">
+                        <span>Mesajı Gönder & Kıvılcımı Başlat</span>
+                        <i class="fa-solid fa-rocket"></i>
+                    </button>
+                </form>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- PROJECT DETAIL MODAL -->
+    <div id="projectModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+        <div class="glass-card rounded-3xl max-w-xl w-full p-6 sm:p-8 relative border border-white/20 animate-fadeIn">
+            <button onclick="closeProjectModal()" class="absolute top-5 right-5 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div id="modalBadge" class="inline-block text-xs font-mono uppercase tracking-wider px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 mb-3">
+                Kategori
+            </div>
+            <h3 id="modalTitle" class="font-display font-bold text-2xl sm:text-3xl text-white mb-3">Proje Başlığı</h3>
+            <p id="modalDesc" class="text-slate-300 text-sm leading-relaxed mb-6">
+                Proje açıklaması...
+            </p>
+            <div class="grid grid-cols-3 gap-3 mb-6 p-4 rounded-2xl bg-dark-950/80 border border-white/10 text-center">
+                <div>
+                    <div class="text-[11px] text-slate-400">Hız Artışı</div>
+                    <div id="modalMetric1" class="font-display font-bold text-lg text-emerald-400">+240%</div>
+                </div>
+                <div>
+                    <div class="text-[11px] text-slate-400">Kullanıcı Memnuniyeti</div>
+                    <div id="modalMetric2" class="font-display font-bold text-lg text-white">4.9 / 5</div>
+                </div>
+                <div>
+                    <div class="text-[11px] text-slate-400">Teknoloji</div>
+                    <div id="modalMetric3" class="font-display font-bold text-sm text-purple-300 mt-0.5">WebGL / Next</div>
+                </div>
+            </div>
+            <div class="flex justify-end gap-3">
+                <button onclick="closeProjectModal()" class="px-5 py-2.5 rounded-xl bg-white/10 text-xs font-semibold text-white hover:bg-white/20 transition">
+                    Kapat
+                </button>
+                <a href="#iletisim" onclick="closeProjectModal()" class="glow-btn px-5 py-2.5 rounded-xl text-xs font-semibold text-white">
+                    Benzer Proje İste
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-white/10 py-10 relative z-10 bg-dark-950/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
+            <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+                <span id="footerBrandName" class="font-display font-bold text-white">NOVA STUDIO</span>
+                <span>© 2026 • Tüm Hakları Saklıdır.</span>
+            </div>
+            <div class="flex items-center gap-6">
+                <a href="#kesfet" class="hover:text-white transition">Yukarı Çık ↑</a>
+                <button onclick="toggleCustomizer()" class="text-purple-400 hover:underline">Kişiselleştir</button>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        /* ==========================================
+           1. WEB AUDIO SYNTHESIZER & SOUND EFFECTS
+           ========================================== */
+        let soundEnabled = true;
+        let audioCtx = null;
+
+        function getAudioContext() {
+            if (!audioCtx) {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (AudioContextClass) {
+                    audioCtx = new AudioContextClass();
+                }
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        function playClickTone(freq = 440, duration = 0.12) {
+            if (!soundEnabled) return;
+            try {
+                const ctx = getAudioContext();
+                if (!ctx) return;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, ctx.currentTime);
+                gain.gain.setValueAtTime(0.12, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + duration);
+            } catch (e) {
+                // Ignore audio errors if blocked
+            }
+        }
+
+        function playSynthPad(freq, label, btnEl) {
+            playClickTone(freq, 0.35);
+            if (btnEl) {
+                btnEl.classList.add('scale-95', 'border-white');
+                setTimeout(() => btnEl.classList.remove('scale-95', 'border-white'), 180);
+            }
+            showToast(`🎵 Frekans Tetiklendi: ${label} (${freq} Hz)`);
+        }
+
+        function playChordSequence() {
+            const notes = [261.63, 329.63, 392.00, 523.25];
+            notes.forEach((n, idx) => {
+                setTimeout(() => playClickTone(n, 0.3), idx * 140);
+            });
+            showToast('🎹 Harmonik Akor Dizisi Çalınıyor...');
+        }
+
+        function toggleSoundEffects() {
+            soundEnabled = !soundEnabled;
+            const icon = document.getElementById('soundIcon');
+            const btn = document.getElementById('soundToggleBtn');
+            if (soundEnabled) {
+                icon.className = 'fa-solid fa-volume-high text-emerald-400';
+                btn.querySelector('span').textContent = 'Ses: Açık';
+                playClickTone(587.33);
+                showToast('🔊 İnteraktif ses efektleri açıldı.');
+            } else {
+                icon.className = 'fa-solid fa-volume-xmark text-slate-400';
+                btn.querySelector('span').textContent = 'Ses: Kapalı';
+                showToast('🔇 Ses efektleri sessize alındı.');
+            }
+        }
+
+        /* ==========================================
+           2. CUSTOM TOAST NOTIFICATION SYSTEM
+           ========================================== */
+        function showToast(message) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'glass-card px-4 py-3 rounded-2xl text-xs font-medium text-white flex items-center gap-2.5 shadow-xl border border-purple-500/40 transform translate-y-4 opacity-0 transition-all duration-300';
+            toast.innerHTML = `<i class="fa-solid fa-sparkles text-purple-400"></i><span>${message}</span>`;
+            container.appendChild(toast);
+
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-4', 'opacity-0');
+            });
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-4', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        /* ==========================================
+           3. LIVE CUSTOMIZER (IDENTITY & THEME)
+           ========================================== */
+        let customizerOpen = false;
+        function toggleCustomizer() {
+            customizerOpen = !customizerOpen;
+            const panel = document.getElementById('customizerPanel');
+            if (customizerOpen) {
+                panel.classList.remove('translate-x-[120%]');
+                playClickTone(520);
+            } else {
+                panel.classList.add('translate-x-[120%]');
+            }
+        }
+
+        function updateCustomIdentity() {
+            const nameVal = document.getElementById('customNameInput').value.trim() || 'NOVA STUDIO';
+            const roleVal = document.getElementById('customRoleInput').value.trim() || 'Geleceğin Dijital Deneyimlerini Tasarlıyoruz';
+
+            document.getElementById('navBrandName').textContent = nameVal;
+            document.getElementById('heroBrandName').textContent = nameVal;
+            document.getElementById('cardBrandName').textContent = nameVal;
+            document.getElementById('footerBrandName').textContent = nameVal;
+            document.getElementById('heroRoleText').textContent = roleVal;
+        }
+
+        function setTheme(primary, secondary, glow, themeName) {
+            document.documentElement.style.setProperty('--accent-primary', primary);
+            document.documentElement.style.setProperty('--accent-secondary', secondary);
+            document.documentElement.style.setProperty('--accent-glow', glow);
+            particleColor = primary;
+            playClickTone(620);
+            showToast(`✨ Atmosfer "${themeName}" olarak güncellendi!`);
+        }
+
+        /* ==========================================
+           4. 3D CARD TILT & CORE INTERACTION
+           ========================================== */
+        function handleTilt(e, card) {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            const rotateX = ((y - centerY) / centerY) * -10;
+            const rotateY = ((x - centerX) / centerX) * 10;
+            card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+        }
+
+        function resetTilt(card) {
+            card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg)`;
+        }
+
+        const coreModes = [
+            { val: '100%', label: 'Kreatif Çekirdek' },
+            { val: 'ULTRA', label: 'Kuantum Render' },
+            { val: 'AI+3D', label: 'Hiper Senkron' },
+            { val: 'MAX', label: 'Siber Estetik' }
+        ];
+        let currentCoreIdx = 0;
+        function cycleCardVisual() {
+            currentCoreIdx = (currentCoreIdx + 1) % coreModes.length;
+            document.getElementById('coreEnergyValue').textContent = coreModes[currentCoreIdx].val;
+            document.getElementById('coreModeLabel').textContent = coreModes[currentCoreIdx].label;
+            playClickTone(480 + currentCoreIdx * 90);
+            showToast(`⚡ Çekirdek Modu: ${coreModes[currentCoreIdx].label}`);
+        }
+
+        /* ==========================================
+           5. PORTFOLIO DATA, FILTER & MODAL
+           ========================================== */
+        const projectsData = [
+            {
+                id: 1,
+                title: 'Aether // 3B Finansal Kokpit',
+                category: 'fintech',
+                badge: 'Fintech & Veri',
+                desc: 'Kripto ve borsa varlıklarını gerçek zamanlı WebGL küreleri üzerinde görselleştiren yeni nesil yatırım platformu.',
+                metric1: '+310%',
+                metric2: '4.98 / 5',
+                metric3: 'Three.js + React',
+                icon: 'fa-chart-pie',
+                gradient: 'from-purple-600/40 to-indigo-900/40'
+            },
+            {
+                id: 2,
+                title: 'Lumina AI // Görsel Stüdyo',
+                category: 'ai',
+                badge: 'Yapay Zeka',
+                desc: 'Tasarımcılar için saniyeler içinde 3 boyutlu dokular ve konsept çizimler üreten üretken yapay zeka arayüzü.',
+                metric1: '0.4 sn',
+                metric2: '5.0 / 5',
+                metric3: 'WebGPU + AI',
+                icon: 'fa-wand-magic-sparkles',
+                gradient: 'from-pink-600/40 to-rose-900/40'
+            },
+            {
+                id: 3,
+                title: 'Chronos // Lüks Saat Vitrini',
+                category: 'web',
+                badge: 'Web Deneyimi',
+                desc: 'İsviçre saat işçiliğini mikro-etkileşimler ve sinematik kaydırma animasyonlarıyla anlatan ödüllü lansman sayfası.',
+                metric1: '+185%',
+                metric2: '4.95 / 5',
+                metric3: 'GSAP + Tailwind',
+                icon: 'fa-clock',
+                gradient: 'from-amber-500/30 to-orange-900/40'
+            },
+            {
+                id: 4,
+                title: 'Nebula // Siber Güvenlik Radarı',
+                category: 'fintech',
+                badge: 'Fintech & Veri',
+                desc: 'Küresel ağ trafiğini ve siber tehditleri canlı harita üzerinde anlık olarak izleyen komuta kontrol arayüzü.',
+                metric1: '99.99%',
+                metric2: '4.9 / 5',
+                metric3: 'D3.js + Canvas',
+                icon: 'fa-shield-halved',
+                gradient: 'from-emerald-600/40 to-teal-900/40'
+            },
+            {
+                id: 5,
+                title: 'Vortex // Mimari Metaverse',
+                category: 'web',
+                badge: 'Web Deneyimi',
+                desc: 'Modern mimari projeleri tarayıcı içinden sanal gerçeklik kalitesinde gezebilmenizi sağlayan interaktif deneyim.',
+                metric1: '+260%',
+                metric2: '4.92 / 5',
+                metric3: 'WebGL 2.0',
+                icon: 'fa-building',
+                gradient: 'from-cyan-600/40 to-blue-900/40'
+            },
+            {
+                id: 6,
+                title: 'EchoMind // Sesli Asistan OS',
+                category: 'ai',
+                badge: 'Yapay Zeka',
+                desc: 'Doğal dil işleme ve duygu analiziyle çalışan, akıcı ses dalgası animasyonlarına sahip akıllı çalışma arkadaşı.',
+                metric1: '+400%',
+                metric2: '4.97 / 5',
+                metric3: 'Neural Audio',
+                icon: 'fa-microphone-lines',
+                gradient: 'from-violet-600/40 to-fuchsia-900/40'
+            }
+        ];
+
+        function renderProjects(filter = 'all') {
+            const grid = document.getElementById('projectsGrid');
+            grid.innerHTML = '';
+            const filtered = filter === 'all' ? projectsData : projectsData.filter(p => p.category === filter);
+
+            filtered.forEach(proj => {
+                const card = document.createElement('div');
+                card.className = 'glass-card rounded-3xl overflow-hidden flex flex-col justify-between group';
+                card.innerHTML = `
+                    <div>
+                        <div class="h-48 bg-gradient-to-br ${proj.gradient} relative flex items-center justify-center overflow-hidden border-b border-white/10">
+                            <i class="fa-solid ${proj.icon} text-6xl text-white/80 group-hover:scale-125 group-hover:rotate-6 transition-transform duration-500"></i>
+                            <span class="absolute top-4 left-4 px-3 py-1 rounded-full bg-dark-950/70 backdrop-blur-md text-[11px] font-mono text-slate-200 border border-white/10">
+                                ${proj.badge}
+                            </span>
+                        </div>
+                        <div class="p-6">
+                            <h3 class="font-display font-bold text-xl text-white group-hover:text-purple-300 transition">${proj.title}</h3>
+                            <p class="text-slate-400 text-xs leading-relaxed mt-2">${proj.desc}</p>
+                        </div>
+                    </div>
+                    <div class="px-6 pb-6 pt-3 flex items-center justify-between border-t border-white/5">
+                        <span class="text-xs font-mono text-emerald-400">${proj.metric3}</span>
+                        <button onclick="openProjectModal(${proj.id})" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white text-white hover:text-dark-950 text-xs font-semibold transition flex items-center gap-1.5">
+                            <span>İncele</span>
+                            <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                        </button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function filterProjects(category, btn) {
+            document.querySelectorAll('.filter-btn').forEach(b => {
+                b.className = 'filter-btn px-4 py-2 rounded-xl text-xs font-semibold glass-card text-slate-300 hover:text-white transition';
+            });
+            btn.className = 'filter-btn active-filter px-4 py-2 rounded-xl text-xs font-semibold bg-white text-dark-950 transition';
+            playClickTone(500);
+            renderProjects(category);
+        }
+
+        function openProjectModal(id) {
+            const proj = projectsData.find(p => p.id === id);
+            if (!proj) return;
+            document.getElementById('modalBadge').textContent = proj.badge;
+            document.getElementById('modalTitle').textContent = proj.title;
+            document.getElementById('modalDesc').textContent = proj.desc;
+            document.getElementById('modalMetric1').textContent = proj.metric1;
+            document.getElementById('modalMetric2').textContent = proj.metric2;
+            document.getElementById('modalMetric3').textContent = proj.metric3;
+
+            const modal = document.getElementById('projectModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            playClickTone(640);
+        }
+
+        function closeProjectModal() {
+            const modal = document.getElementById('projectModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        /* ==========================================
+           6. INTERACTIVE BUDGET ESTIMATOR
+           ========================================== */
+        let basePrice = 25000;
+        let baseWeeks = 2;
+        let selectedTypeTitle = 'Kurumsal & Prestij Web';
+
+        function selectCalcType(price, weeks, title, btnEl) {
+            basePrice = price;
+            baseWeeks = weeks;
+            selectedTypeTitle = title;
+
+            document.querySelectorAll('.calc-type-btn').forEach(b => {
+                b.className = 'calc-type-btn p-4 rounded-2xl border border-white/10 bg-white/5 text-left hover:border-white/30 transition';
+            });
+            btnEl.className = 'calc-type-btn p-4 rounded-2xl border border-purple-500 bg-purple-500/20 text-left transition';
+            playClickTone(480);
+            updateEstimate();
+        }
+
+        function updateEstimate() {
+            let addonsTotal = 0;
+            let addonCount = 0;
+            document.querySelectorAll('.calc-addon:checked').forEach(cb => {
+                addonsTotal += parseInt(cb.value, 10);
+                addonCount++;
+            });
+
+            const urgency = parseInt(document.getElementById('urgencySlider').value, 10);
+            let multiplier = 1;
+            let urgencyText = 'Standart Plan';
+            if (urgency === 1) {
+                multiplier = 0.9;
+                urgencyText = 'Esnek Plan (%10 İndirim)';
+            } else if (urgency === 3) {
+                multiplier = 1.25;
+                urgencyText = 'Ekspres Teslimat (+%25)';
+            }
+
+            document.getElementById('urgencyLabel').textContent = urgencyText;
+            const finalPrice = Math.round((basePrice + addonsTotal) * multiplier);
+            const totalWeeks = Math.max(1, baseWeeks + Math.ceil(addonCount * 0.5) + (urgency === 3 ? -1 : urgency === 1 ? 1 : 0));
+
+            document.getElementById('summaryProjectTitle').textContent = selectedTypeTitle;
+            document.getElementById('summaryPrice').textContent = finalPrice.toLocaleString('tr-TR') + ' ₺';
+            document.getElementById('summaryWeeks').textContent = `${totalWeeks} - ${totalWeeks + 1} Hafta`;
+        }
+
+        function copyEstimateSummary() {
+            const summaryText = `Proje Paketi: ${selectedTypeTitle} | Tahmini Bütçe: ${document.getElementById('summaryPrice').textContent} | Süre: ${document.getElementById('summaryWeeks').textContent}`;
+            const tempInput = document.createElement('textarea');
+            tempInput.value = summaryText;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            playClickTone(600);
+            showToast('📋 Teklif özeti panoya kopyalandı!');
+        }
+
+        function transferEstimateToContact() {
+            const summaryText = `Merhaba, "${selectedTypeTitle}" paketi (${document.getElementById('summaryPrice').textContent} / ${document.getElementById('summaryWeeks').textContent}) hakkında görüşmek istiyorum.`;
+            document.getElementById('contactMessage').value = summaryText;
+            document.getElementById('iletisim').scrollIntoView({ behavior: 'smooth' });
+            playClickTone(680);
+            showToast('🚀 Paket bilgileri iletişim formuna aktarıldı!');
+        }
+
+        /* ==========================================
+           7. CONTACT FORM HANDLER
+           ========================================== */
+        function handleContactSubmit(e) {
+            e.preventDefault();
+            const name = document.getElementById('contactName').value;
+            playChordSequence();
+            triggerConfettiBurst();
+            showToast(`🎉 Teşekkürler ${name}! Mesajınız başarıyla alındı.`);
+            e.target.reset();
+        }
+
+        /* ==========================================
+           8. TYPEWRITER & LIVE CLOCK
+           ========================================== */
+        const phrases = [
+            'Yaratıcı Web Mimarisi',
+            'Üç Boyutlu Etkileşimler',
+            'Yüksek Dönüşümlü Arayüzler',
+            'Kusursuz Mobil Deneyim'
+        ];
+        let phraseIdx = 0;
+        let charIdx = 0;
+        let isDeleting = false;
+
+        function runTypewriter() {
+            const el = document.getElementById('typewriterText');
+            const currentPhrase = phrases[phraseIdx];
+            if (isDeleting) {
+                charIdx--;
+            } else {
+                charIdx++;
+            }
+            el.textContent = currentPhrase.substring(0, charIdx);
+
+            let speed = isDeleting ? 40 : 90;
+            if (!isDeleting && charIdx === currentPhrase.length) {
+                speed = 1800;
+                isDeleting = true;
+            } else if (isDeleting && charIdx === 0) {
+                isDeleting = false;
+                phraseIdx = (phraseIdx + 1) % phrases.length;
+                speed = 400;
+            }
+            setTimeout(runTypewriter, speed);
+        }
+
+        function updateLiveClock() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('tr-TR', { hour12: false });
+            const dateStr = now.toLocaleDateString('tr-TR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            document.getElementById('liveClockDisplay').textContent = timeStr;
+            document.getElementById('liveDateDisplay').textContent = dateStr;
+        }
+
+        /* ==========================================
+           9. INTERACTIVE PARTICLE & CONFETTI CANVAS
+           ========================================== */
+        const canvas = document.getElementById('bgCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        let burstParticles = [];
+        let particleSpeedMult = 1;
+        let particleColor = '#8B5CF6';
+        let mouse = { x: -1000, y: -1000 };
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+        });
+
+        function initParticles() {
+            resizeCanvas();
+            particles = [];
+            const count = Math.min(75, Math.floor(window.innerWidth / 20));
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    vx: (Math.random() - 0.5) * 0.8,
+                    vy: (Math.random() - 0.5) * 0.8,
+                    size: Math.random() * 2.2 + 1
+                });
+            }
+        }
+
+        function updateParticleSpeed(val) {
+            particleSpeedMult = parseFloat(val);
+            const label = document.getElementById('speedValueLabel');
+            if (particleSpeedMult < 0.8) label.textContent = 'Sakin';
+            else if (particleSpeedMult > 1.6) label.textContent = 'Hiper Hız';
+            else label.textContent = 'Normal';
+        }
+
+        function triggerConfettiBurst() {
+            const cx = window.innerWidth / 2;
+            const cy = window.innerHeight / 2;
+            const colors = ['#8B5CF6', '#EC4899', '#10B981', '#F59E0B', '#3B82F6'];
+            for (let i = 0; i < 45; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 7 + 2;
+                burstParticles.push({
+                    x: cx,
+                    y: cy,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    size: Math.random() * 4 + 2,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    alpha: 1
+                });
+            }
+            showToast('✨ Sihirli parçacık patlaması tetiklendi!');
+        }
+
+        function animateCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Background constellation particles
+            for (let i = 0; i < particles.length; i++) {
+                const p = particles[i];
+                p.x += p.vx * particleSpeedMult;
+                p.y += p.vy * particleSpeedMult;
+
+                if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+                if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fillStyle = particleColor;
+                ctx.fill();
+
+                // Connect near mouse
+                const dxMouse = p.x - mouse.x;
+                const dyMouse = p.y - mouse.y;
+                const distMouse = Math.sqrt(dxMouse * dxMouse + dyMouse * dyMouse);
+                if (distMouse < 160) {
+                    ctx.beginPath();
+                    ctx.moveTo(p.x, p.y);
+                    ctx.lineTo(mouse.x, mouse.y);
+                    ctx.strokeStyle = `rgba(255, 255, 255, ${1 - distMouse / 160})`;
+                    ctx.lineWidth = 0.8;
+                    ctx.stroke();
+                }
+
+                // Connect nearby particles
+                for (let j = i + 1; j < particles.length; j++) {
+                    const p2 = particles[j];
+                    const dx = p.x - p2.x;
+                    const dy = p.y - p2.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 110) {
+                        ctx.beginPath();
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.strokeStyle = `rgba(148, 163, 184, ${(1 - dist / 110) * 0.25})`;
+                        ctx.lineWidth = 0.6;
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            // Confetti burst particles
+            for (let i = burstParticles.length - 1; i >= 0; i--) {
+                const bp = burstParticles[i];
+                bp.x += bp.vx;
+                bp.y += bp.vy;
+                bp.vy += 0.12; // gravity
+                bp.alpha -= 0.018;
+
+                if (bp.alpha <= 0) {
+                    burstParticles.splice(i, 1);
+                    continue;
+                }
+
+                ctx.save();
+                ctx.globalAlpha = bp.alpha;
+                ctx.beginPath();
+                ctx.arc(bp.x, bp.y, bp.size, 0, Math.PI * 2);
+                ctx.fillStyle = bp.color;
+                ctx.fill();
+                ctx.restore();
+            }
+
+            requestAnimationFrame(animateCanvas);
+        }
+
+        /* ==========================================
+           10. INITIALIZATION ON WINDOW LOAD
+           ========================================== */
+        window.onload = function () {
+            initParticles();
+            animateCanvas();
+            renderProjects('all');
+            runTypewriter();
+            updateLiveClock();
+            setInterval(updateLiveClock, 1000);
+        };
+    </script>
+</body>
+</html>
